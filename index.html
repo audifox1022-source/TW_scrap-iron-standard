@@ -10,54 +10,55 @@
         @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;800&display=swap');
         body { font-family: 'Pretendard', sans-serif; letter-spacing: -0.02em; }
         .scrollbar-hide::-webkit-scrollbar { display: none; }
-        .highlight { background-color: #fef08a; border-radius: 2px; font-weight: 800; color: #1e40af; }
+        /* 검색어 강조 스타일 */
+        .highlight { background-color: #fef08a; border-radius: 2px; font-weight: 800; color: #1e40af; padding: 0 2px; }
+        /* PC에서 카드가 너무 커 보이지 않도록 최대 높이 및 스크롤 제어 */
+        .material-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 8px;
+        }
     </style>
 </head>
-<body class="bg-slate-50 min-h-screen">
+<body class="bg-gray-100 min-h-screen">
 
-    <div class="max-w-7xl mx-auto px-4 py-6 md:py-10">
+    <div class="max-w-[1600px] mx-auto px-4 py-8">
         
-        <header class="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <header class="mb-10 flex flex-col md:flex-row md:items-center justify-between bg-white p-8 rounded-3xl shadow-sm border border-gray-200">
             <div>
-                <div class="inline-block px-3 py-1 bg-blue-600 text-white text-xs font-bold rounded-full mb-2">FACTORY STANDARD</div>
-                <h1 class="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight">
-                    회수철 분류 관리 기준
-                </h1>
-                <p class="mt-2 text-slate-500 flex items-center gap-2">
-                    <i class="fa-solid fa-calendar-check text-blue-500"></i>
-                    최종 업데이트: 2025.02.19 | 현장 식별용 마킹 가이드
-                </p>
+                <div class="inline-flex items-center gap-2 px-3 py-1 bg-slate-900 text-white text-xs font-bold rounded-md mb-3">
+                    <i class="fas fa-microchip"></i> SYSTEM V2.5
+                </div>
+                <h1 class="text-3xl md:text-4xl font-black text-gray-900 tracking-tight">회수철 분류 관리 기준</h1>
+                <p class="mt-2 text-gray-500 font-medium">현장 마킹 식별 및 강종 데이터베이스 (최종 업데이트: 2025.02.19)</p>
             </div>
-            <div class="hidden md:block text-right">
-                <span class="text-sm font-semibold text-slate-400">Total Groups: 11</span>
+            <div class="mt-4 md:mt-0 flex gap-4">
+                <div class="text-center px-6 py-2 bg-gray-50 rounded-2xl border border-gray-100">
+                    <p class="text-xs text-gray-400 font-bold uppercase">Total Items</p>
+                    <p class="text-2xl font-black text-blue-600">11</p>
+                </div>
             </div>
         </header>
 
-        <div class="sticky top-4 z-30 mb-8 space-y-4">
-            <div class="bg-white/80 backdrop-blur-md p-4 rounded-2xl shadow-xl shadow-slate-200/50 border border-white flex flex-col lg:flex-row gap-4">
+        <div class="sticky top-6 z-40 mb-10">
+            <div class="bg-white/90 backdrop-blur-xl p-3 rounded-2xl shadow-2xl shadow-gray-200/50 border border-white flex flex-col xl:flex-row gap-4">
                 <div class="relative flex-1">
-                    <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                    <i class="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-gray-400"></i>
                     <input type="text" id="searchInput" 
-                        class="w-full pl-11 pr-4 py-3 bg-slate-100 border-none rounded-xl focus:ring-2 focus:ring-blue-500 transition-all text-base"
-                        placeholder="강종명을 입력하세요 (예: F316L, 4130, S355)">
+                        class="w-full pl-12 pr-6 py-4 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-blue-500 transition-all text-lg font-medium"
+                        placeholder="강종 또는 그룹명을 입력하세요...">
                 </div>
-                <div class="flex gap-2 overflow-x-auto pb-1 lg:pb-0 scrollbar-hide" id="categoryFilters"></div>
+                <div class="flex items-center gap-2 overflow-x-auto pb-2 xl:pb-0 scrollbar-hide" id="categoryFilters">
+                    </div>
             </div>
         </div>
 
-        <div id="cardContainer" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"></div>
+        <div id="cardContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-8"></div>
 
-        <div id="emptyState" class="hidden flex-col items-center justify-center py-20 bg-white rounded-3xl border-2 border-dashed border-slate-200">
-            <div class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4 text-slate-300">
-                <i class="fas fa-magnifying-glass text-2xl"></i>
-            </div>
-            <p class="text-slate-900 font-bold text-lg">검색 결과가 없습니다.</p>
-            <p class="text-slate-500">다른 키워드나 분류를 선택해 보세요.</p>
+        <div id="emptyState" class="hidden flex-col items-center justify-center py-32 bg-white rounded-[3rem] border-2 border-dashed border-gray-200">
+            <i class="fas fa-ghost text-6xl text-gray-200 mb-4"></i>
+            <p class="text-gray-400 font-bold text-xl">데이터를 찾을 수 없습니다.</p>
         </div>
-
-        <footer class="mt-16 text-center border-t border-slate-200 pt-8 pb-12">
-           <p class="text-slate-400 text-sm font-medium tracking-widest uppercase">Scrap Iron Management System v2.0</p>
-        </footer>
     </div>
 
     <script>
@@ -78,24 +79,20 @@
         let currentSearch = '';
         let currentCategory = 'All';
 
-        const searchInput = document.getElementById('searchInput');
-        const categoryContainer = document.getElementById('categoryFilters');
-        const cardContainer = document.getElementById('cardContainer');
-        const emptyState = document.getElementById('emptyState');
-
-        // 필터 생성
+        // 필터 및 렌더링 로직 (PC 최적화 스타일 포함)
         const categories = ['All', 'P1', 'P1-1', 'P2', 'P2-1', 'P3', 'P4', 'P5', 'P6', 'P7', 'P8', 'P9'];
+        const categoryContainer = document.getElementById('categoryFilters');
+
         categories.forEach(cat => {
             const btn = document.createElement('button');
-            btn.textContent = cat === 'All' ? '전체' : cat;
-            btn.className = `filter-btn px-5 py-2 rounded-xl text-sm font-bold transition-all whitespace-nowrap ${cat === 'All' ? 'bg-blue-600 text-white shadow-lg shadow-blue-200' : 'bg-white text-slate-500 hover:bg-slate-100'}`;
+            btn.textContent = cat === 'All' ? '전체 보기' : cat;
+            btn.className = `px-5 py-2.5 rounded-xl text-sm font-bold transition-all shadow-sm ${cat === 'All' ? 'bg-blue-600 text-white' : 'bg-white text-gray-500 hover:bg-gray-100'}`;
             btn.onclick = () => {
                 currentCategory = cat;
-                document.querySelectorAll('.filter-btn').forEach(b => {
-                    b.classList.remove('bg-blue-600', 'text-white', 'shadow-lg', 'shadow-blue-200');
-                    b.classList.add('bg-white', 'text-slate-500');
+                document.querySelectorAll('#categoryFilters button').forEach(b => {
+                    b.className = 'px-5 py-2.5 rounded-xl text-sm font-bold transition-all bg-white text-gray-500 hover:bg-gray-100 shadow-sm';
                 });
-                btn.classList.add('bg-blue-600', 'text-white', 'shadow-lg', 'shadow-blue-200');
+                btn.className = 'px-5 py-2.5 rounded-xl text-sm font-bold transition-all bg-blue-600 text-white shadow-lg shadow-blue-100';
                 render();
             };
             categoryContainer.appendChild(btn);
@@ -108,7 +105,9 @@
         }
 
         function render() {
-            cardContainer.innerHTML = '';
+            const container = document.getElementById('cardContainer');
+            container.innerHTML = '';
+            
             const filtered = data.filter(item => {
                 const matchesCategory = currentCategory === 'All' || item.id === currentCategory;
                 const matchesSearch = item.id.includes(currentSearch.toUpperCase()) || 
@@ -117,57 +116,51 @@
             });
 
             if (filtered.length === 0) {
-                emptyState.classList.replace('hidden', 'flex');
+                document.getElementById('emptyState').classList.replace('hidden', 'flex');
                 return;
             }
-            emptyState.classList.replace('flex', 'hidden');
+            document.getElementById('emptyState').classList.replace('flex', 'hidden');
 
             filtered.forEach(item => {
                 const card = document.createElement('div');
-                card.className = "bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-slate-200 group";
+                card.className = "bg-white rounded-[2rem] border border-gray-200 overflow-hidden hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 group";
                 
+                // 검색 결과에 따른 재질 필터링 및 하이라이트
                 const materialsHtml = item.materials
                     .filter(m => m.toUpperCase().includes(currentSearch.toUpperCase()))
-                    .map(m => `
-                        <div class="px-3 py-2 bg-slate-50 rounded-lg text-sm font-medium text-slate-700 border border-slate-100">
-                            ${highlightText(m, currentSearch)}
-                        </div>
-                    `).join('');
+                    .map(m => `<div class="p-2.5 bg-gray-50 rounded-xl text-xs font-semibold text-gray-600 border border-gray-100 hover:bg-white hover:border-blue-200 transition-colors">${highlightText(m, currentSearch)}</div>`)
+                    .join('');
 
                 card.innerHTML = `
-                    <div class="p-6 border-b border-slate-50 relative" style="background-color: ${item.colorHex}20">
-                        <div class="flex justify-between items-start">
-                            <div>
-                                <div class="flex items-center gap-2 mb-1">
-                                    <span class="w-3 h-3 rounded-full" style="background-color: ${item.colorHex === '#ffffff' ? '#e2e8f0' : item.colorHex}"></span>
-                                    <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">${item.group} GROUP</span>
-                                </div>
-                                <h3 class="text-3xl font-black text-slate-900">${item.id}</h3>
-                            </div>
+                    <div class="p-8 pb-6 relative overflow-hidden" style="background: linear-gradient(135deg, ${item.colorHex}30 0%, #ffffff 100%)">
+                        <div class="flex justify-between items-start mb-6">
+                            <div class="w-14 h-14 rounded-2xl shadow-inner border-4 border-white" style="background-color: ${item.colorHex === '#ffffff' ? '#f1f5f9' : item.colorHex}"></div>
                             <div class="text-right">
-                                <div class="inline-block px-3 py-1 rounded-lg border text-xs font-bold mb-2" 
-                                     style="background-color: white; border-color: ${item.colorHex}; color: ${item.textHex === '#ffffff' ? '#1e293b' : item.textHex}">
-                                    ${item.colorName}
-                                </div>
-                                <p class="text-[10px] font-bold text-slate-400">${item.note}</p>
+                                <span class="block text-3xl font-black text-gray-900 leading-none">${item.id}</span>
+                                <span class="text-sm font-bold text-gray-400 uppercase tracking-tighter">${item.group} Group</span>
                             </div>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <span class="px-3 py-1 bg-white/80 rounded-lg text-xs font-black border border-gray-100 shadow-sm" style="color: ${item.textHex}">${item.colorName}</span>
+                            <span class="text-xs font-bold text-gray-400">| ${item.note}</span>
                         </div>
                     </div>
-                    <div class="p-6">
-                        <div class="flex justify-between items-center mb-4">
-                            <span class="text-xs font-bold text-slate-400 uppercase">Materials (${item.materials.length})</span>
-                            <i class="fa-solid fa-layer-group text-slate-200 group-hover:text-blue-500 transition-colors"></i>
+                    <div class="p-8 pt-2">
+                        <div class="h-[1px] bg-gray-100 my-4"></div>
+                        <div class="flex items-center justify-between mb-4">
+                            <span class="text-[10px] font-black text-gray-300 uppercase tracking-widest">Material List</span>
+                            <span class="text-[10px] font-bold text-blue-500">${item.materials.length} Items</span>
                         </div>
-                        <div class="grid grid-cols-1 gap-2">
+                        <div class="material-grid">
                             ${materialsHtml}
                         </div>
                     </div>
                 `;
-                cardContainer.appendChild(card);
+                container.appendChild(card);
             });
         }
 
-        searchInput.addEventListener('input', (e) => {
+        document.getElementById('searchInput').addEventListener('input', (e) => {
             currentSearch = e.target.value;
             render();
         });
