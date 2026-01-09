@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>회수철 관리 기준 v3.2</title>
+    <title>회수철 관리 기준 v3.3</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -12,27 +12,20 @@
         body { font-family: 'Pretendard', sans-serif; letter-spacing: -0.01em; background-color: #f1f5f9; }
         .highlight { background-color: #fbbf24; font-weight: 800; color: #000; padding: 0 4px; border-radius: 4px; }
         
-        /* 화면용 가독성 설정 */
-        .card-title { color: #0f172a; font-weight: 900; }
-        .material-badge { background-color: #f8fafc; border: 1px solid #e2e8f0; color: #334155; transition: all 0.2s; }
-        .material-badge:hover { background-color: #fff; border-color: #3b82f6; color: #1e40af; }
-
-        /* [핵심] 인쇄 전용 스타일 - A4 한 페이지 최적화 */
+        /* 모달 애니메이션 */
+        .modal-bg { transition: opacity 0.3s ease; }
+        .modal-content { transition: transform 0.3s ease; }
+        
         @media print {
+            header, .no-print, .filter-section, #helpModal { display: none !important; }
             body { background-color: white !important; margin: 0 !important; padding: 10mm !important; }
-            header, .no-print, .filter-section { display: none !important; }
-            #mainViewport { display: none !important; } /* 일반 카드 숨김 */
-            #printViewport { display: block !important; width: 100% !important; } /* 인쇄용 표 표시 */
-            
+            #mainViewport { display: none !important; }
+            #printViewport { display: block !important; width: 100% !important; }
             table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-            th, td { border: 1px solid #333 !important; padding: 8px 5px !important; word-break: break-all; }
-            th { background-color: #f2f2f2 !important; font-size: 10pt; }
-            td { font-size: 9pt; vertical-align: middle; }
-            .print-color-box { display: inline-block; width: 14px; height: 14px; border: 1px solid #000; vertical-align: middle; }
-            
+            th, td { border: 1px solid #333 !important; padding: 8px 5px !important; }
             @page { size: A4; margin: 0; }
         }
-        #printViewport { display: none; } /* 평소에는 인쇄용 표를 숨김 */
+        #printViewport { display: none; }
     </style>
 </head>
 <body class="p-4 md:p-8">
@@ -40,15 +33,18 @@
     <div class="max-w-[1400px] mx-auto">
         <header class="flex flex-col md:flex-row justify-between items-center mb-10 no-print">
             <div>
-                <h1 class="text-4xl font-black text-slate-900 mb-2">회수철 분류 관리 기준</h1>
-                <p class="text-lg text-slate-600 font-medium">실시간 현장 식별 및 데이터 조회 시스템</p>
+                <h1 class="text-4xl font-black text-slate-900 mb-2 tracking-tighter">회수철 분류 관리 기준</h1>
+                <p class="text-lg text-slate-600 font-medium italic">Scrap Iron Management Standard v3.3</p>
             </div>
-            <div class="flex gap-3 mt-4 md:mt-0">
-                <button onclick="window.print()" class="bg-slate-900 hover:bg-black text-white px-6 py-4 rounded-2xl font-bold flex items-center gap-2 shadow-xl transition-all active:scale-95">
-                    <i class="fas fa-file-pdf"></i> A4 PDF/인쇄
+            <div class="flex flex-wrap gap-2 mt-4 md:mt-0 justify-center">
+                <button onclick="openHelp()" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-4 rounded-2xl font-bold flex items-center gap-2 shadow-lg transition-all active:scale-95">
+                    <i class="fas fa-question-circle"></i> 설치/도움말
                 </button>
-                <button onclick="exportToExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-4 rounded-2xl font-bold flex items-center gap-2 shadow-xl transition-all active:scale-95">
-                    <i class="fas fa-file-excel"></i> 엑셀 추출
+                <button onclick="window.print()" class="bg-slate-900 hover:bg-black text-white px-5 py-4 rounded-2xl font-bold flex items-center gap-2 shadow-lg transition-all active:scale-95">
+                    <i class="fas fa-file-pdf"></i> A4 인쇄
+                </button>
+                <button onclick="exportToExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-4 rounded-2xl font-bold flex items-center gap-2 shadow-lg transition-all active:scale-95">
+                    <i class="fas fa-file-excel"></i> 엑셀
                 </button>
             </div>
         </header>
@@ -62,42 +58,104 @@
             </div>
         </div>
 
-        <div id="mainViewport" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
-            </div>
+        <div id="mainViewport" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8"></div>
 
         <div id="printViewport">
             <h2 style="text-align: center; font-size: 20pt; margin-bottom: 20px;">회수철 분류 관리 기준 (A4)</h2>
             <table id="printableTable">
                 <thead>
-                    <tr>
-                        <th style="width: 12%">코드</th>
-                        <th style="width: 18%">마킹 색상</th>
-                        <th style="width: 15%">그룹(비고)</th>
-                        <th>포함 강종 목록</th>
-                    </tr>
+                    <tr><th style="width: 12%">코드</th><th style="width: 18%">마킹 색상</th><th style="width: 15%">그룹(비고)</th><th>포함 강종 목록</th></tr>
                 </thead>
-                <tbody id="printTableBody">
-                    </tbody>
+                <tbody id="printTableBody"></tbody>
             </table>
         </div>
     </div>
 
+    <div id="helpModal" class="fixed inset-0 z-[100] hidden items-center justify-center p-4">
+        <div class="modal-bg absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onclick="closeHelp()"></div>
+        <div class="modal-content relative bg-white w-full max-w-2xl rounded-[2.5rem] shadow-2xl overflow-hidden transform scale-95 opacity-0 transition-all duration-300">
+            <div class="p-8 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                <h3 class="text-2xl font-black text-slate-900 italic">설치 가이드 (Home Screen)</h3>
+                <button onclick="closeHelp()" class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-slate-200 transition-colors text-slate-500 text-xl">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="p-8 max-h-[70vh] overflow-y-auto space-y-8 text-slate-700 leading-relaxed">
+                <section>
+                    <div class="flex items-center gap-3 mb-4">
+                        <i class="fab fa-apple text-3xl text-slate-900"></i>
+                        <h4 class="text-xl font-bold">iPhone (Safari)</h4>
+                    </div>
+                    <ol class="list-decimal list-inside space-y-2 font-medium">
+                        <li>하단 중앙의 <span class="text-blue-600 font-bold">[공유 버튼]</span>을 누릅니다.</li>
+                        <li>리스트에서 <span class="text-blue-600 font-bold">[홈 화면에 추가]</span>를 선택합니다.</li>
+                        <li>우측 상단 <span class="text-blue-600 font-bold">[추가]</span>를 누르면 앱으로 설치됩니다.</li>
+                    </ol>
+                </section>
+                <section>
+                    <div class="flex items-center gap-3 mb-4">
+                        <i class="fab fa-android text-3xl text-emerald-500"></i>
+                        <h4 class="text-xl font-bold">Android (Chrome)</h4>
+                    </div>
+                    <ol class="list-decimal list-inside space-y-2 font-medium">
+                        <li>우측 상단 <span class="text-emerald-600 font-bold">[점 3개 아이콘]</span>을 누릅니다.</li>
+                        <li><span class="text-emerald-600 font-bold">[홈 화면에 추가]</span> 또는 <span class="text-emerald-600 font-bold">[앱 설치]</span>를 누릅니다.</li>
+                        <li>바탕화면에 생성된 아이콘으로 즉시 사용 가능합니다.</li>
+                    </ol>
+                </section>
+                <section>
+                    <div class="flex items-center gap-3 mb-4">
+                        <i class="fas fa-desktop text-2xl text-blue-500"></i>
+                        <h4 class="text-xl font-bold">PC (Chrome/Edge)</h4>
+                    </div>
+                    <ol class="list-decimal list-inside space-y-2 font-medium">
+                        <li>주소창 우측의 <span class="text-blue-600 font-bold">[설치 아이콘]</span>을 클릭합니다.</li>
+                        <li>또는 메뉴에서 <span class="text-blue-600 font-bold">[저장 및 공유] → [앱 설치]</span>를 선택합니다.</li>
+                        <li>바탕화면 및 작업표시줄에 고정하여 사용하세요.</li>
+                    </ol>
+                </section>
+            </div>
+            <div class="p-6 bg-slate-900 text-center">
+                <button onclick="closeHelp()" class="text-white font-bold tracking-widest text-sm uppercase">Close Guide</button>
+            </div>
+        </div>
+    </div>
+
     <script>
+        // 데이터는 이전과 동일 (P1~P9)
         const data = [
-            { id: 'P1', group: 'SC', colorName: '연녹색', colorHex: '#22c55e', bgLight: '#dcfce7', note: 'CARBON', materials: ['TW 694F70 M2', 'TW 266M GR.2 V', 'TW P1', 'TW S35C', 'TW S48C', 'TW S45SU', 'TWS355', 'TWS355Mn', 'TW 266M GR.2', 'TW SSW R-1', 'TW F1', 'TW B50 A517', 'S355NL', 'TW 694F70 M3', 'TW S25C', 'TW A668CL.E', 'EH36', 'TW 105', 'TW S44SY', 'TW B50A974A', 'TW 350LF2', 'TW 350LF2 MOD', 'SA266Gr2C', 'TW 350LF6', 'JB4726 20MnMo4', 'C-STEEL', 'TW S30Mn', 'TWVL E36', 'TW S30H', 'TW 694F70', 'TW 694F65 M6', 'A860WPHYF70', 'ASME SA765 GR.4', 'B50A517', 'TW 765GR4', 'TW 765Gr.4 M2', 'TW SF490AS1'] },
-            { id: 'P1-1', group: 'SC', colorName: '살구색', colorHex: '#fb923c', bgLight: '#fff7ed', note: 'CARBON', materials: ['TW S360', 'TW SF490', 'TW SF490V', 'TW SF490V M1', 'TW SF590', 'TW SF590M1', 'TW SF590S'] },
-            { id: 'P2', group: 'SCM', colorName: '황색', colorHex: '#eab308', bgLight: '#fef9c3', note: 'CARBON / Low Alloy', materials: ['TW F22', 'TW SCM430', 'TW42CrMo4 M', 'TW SCM440', 'TW K11B64A', 'SFCM880', 'TW F11 Modi', 'TW 4130 M2', 'TWCrMo825', 'SCM440', 'ASME SA336 GR.F12 MOD1', 'TW 4140', 'TW S17MoS', 'TW SCM435', '42CrMo4', 'TW F1', 'TW SFCM830', 'TW 4130 M5'] },
-            { id: 'P2-1', group: 'SNCM', colorName: '은색', colorHex: '#94a3b8', bgLight: '#f1f5f9', note: 'ALLOY', materials: ['SNCM439', 'SNCM431M', 'TW 4340 M1', '34CrNiMo6', 'TW 508Gr4N', 'TW 18CrNiMo7-6', 'SKT4', 'TW P4', 'WSTE 460'] },
-            { id: 'P3', group: 'STS 304', colorName: '적색', colorHex: '#ef4444', bgLight: '#fee2e2', note: 'Stainless Steel', materials: ['TW F304L', 'TW F304H', 'TW F321H', 'TW F347H'] },
-            { id: 'P4', group: 'STS 316', colorName: '주황', colorHex: '#f97316', bgLight: '#ffedd5', note: 'Stainless Steel', materials: ['TW F316L', 'TW F316L P', 'TW F317L', 'TW F316 Ti'] },
-            { id: 'P5', group: 'STS 400', colorName: '분홍', colorHex: '#ec4899', bgLight: '#fce7f3', note: 'Stainless Steel', materials: ['TW F6a', 'TW F9', 'TW F5', 'TW F91', 'TW X11 CrMo12-1'] },
-            { id: 'P6', group: 'SKD', colorName: '연청', colorHex: '#38bdf8', bgLight: '#e0f2fe', note: 'Tool Steel', materials: ['TW SKD61', 'TW F22V'] },
-            { id: 'P7', group: 'SKH', colorName: '검정', colorHex: '#000000', bgLight: '#334155', note: 'Tool Steel', materials: ['TW F92'] },
-            { id: 'P8', group: 'STS Cu', colorName: '백색', colorHex: '#ffffff', bgLight: '#ffffff', note: 'Special STS', materials: ['TW 17-4', 'SUS630', 'TW 06X12H3Д'] },
-            { id: 'P9', group: 'STS Dual', colorName: '아이보리', colorHex: '#f59e0b', bgLight: '#fffbeb', note: 'Special STS', materials: ['TW F51', 'TW F53'] }
+            { id: 'P1', group: 'SC', colorName: '연녹색', colorHex: '#22c55e', note: 'CARBON', materials: ['TW 694F70 M2', 'TW 266M GR.2 V', 'TW P1', 'TW S35C', 'TW S48C', 'TW S45SU', 'TWS355', 'TWS355Mn', 'TW 266M GR.2', 'TW SSW R-1', 'TW F1', 'TW B50 A517', 'S355NL', 'TW 694F70 M3', 'TW S25C', 'TW A668CL.E', 'EH36', 'TW 105', 'TW S44SY', 'TW B50A974A', 'TW 350LF2', 'TW 350LF2 MOD', 'SA266Gr2C', 'TW 350LF6', 'JB4726 20MnMo4', 'C-STEEL', 'TW S30Mn', 'TWVL E36', 'TW S30H', 'TW 694F70', 'TW 694F65 M6', 'A860WPHYF70', 'ASME SA765 GR.4', 'B50A517', 'TW 765GR4', 'TW 765Gr.4 M2', 'TW SF490AS1'] },
+            { id: 'P1-1', group: 'SC', colorName: '살구색', colorHex: '#fb923c', note: 'CARBON', materials: ['TW S360', 'TW SF490', 'TW SF490V', 'TW SF490V M1', 'TW SF590', 'TW SF590M1', 'TW SF590S'] },
+            { id: 'P2', group: 'SCM', colorName: '황색', colorHex: '#eab308', note: 'CARBON / Low Alloy', materials: ['TW F22', 'TW SCM430', 'TW42CrMo4 M', 'TW SCM440', 'TW K11B64A', 'SFCM880', 'TW F11 Modi', 'TW 4130 M2', 'TWCrMo825', 'SCM440', 'ASME SA336 GR.F12 MOD1', 'TW 4140', 'TW S17MoS', 'TW SCM435', '42CrMo4', 'TW F1', 'TW SFCM830', 'TW 4130 M5'] },
+            { id: 'P2-1', group: 'SNCM', colorName: '은색', colorHex: '#94a3b8', note: 'ALLOY', materials: ['SNCM439', 'SNCM431M', 'TW 4340 M1', '34CrNiMo6', 'TW 508Gr4N', 'TW 18CrNiMo7-6', 'SKT4', 'TW P4', 'WSTE 460'] },
+            { id: 'P3', group: 'STS 304', colorName: '적색', colorHex: '#ef4444', note: 'Stainless Steel', materials: ['TW F304L', 'TW F304H', 'TW F321H', 'TW F347H'] },
+            { id: 'P4', group: 'STS 316', colorName: '주황', colorHex: '#f97316', note: 'Stainless Steel', materials: ['TW F316L', 'TW F316L P', 'TW F317L', 'TW F316 Ti'] },
+            { id: 'P5', group: 'STS 400', colorName: '분홍', colorHex: '#ec4899', note: 'Stainless Steel', materials: ['TW F6a', 'TW F9', 'TW F5', 'TW F91', 'TW X11 CrMo12-1'] },
+            { id: 'P6', group: 'SKD', colorName: '연청', colorHex: '#38bdf8', note: 'Tool Steel', materials: ['TW SKD61', 'TW F22V'] },
+            { id: 'P7', group: 'SKH', colorName: '검정', colorHex: '#000000', note: 'Tool Steel', materials: ['TW F92'] },
+            { id: 'P8', group: 'STS Cu', colorName: '백색', colorHex: '#ffffff', note: 'Special STS', materials: ['TW 17-4', 'SUS630', 'TW 06X12H3Д'] },
+            { id: 'P9', group: 'STS Dual', colorName: '아이보리', colorHex: '#f59e0b', note: 'Special STS', materials: ['TW F51', 'TW F53'] }
         ];
 
         let currentSearch = '';
+
+        function openHelp() {
+            const modal = document.getElementById('helpModal');
+            const content = modal.querySelector('.modal-content');
+            modal.classList.replace('hidden', 'flex');
+            setTimeout(() => {
+                content.classList.replace('scale-95', 'scale-100');
+                content.classList.replace('opacity-0', 'opacity-100');
+            }, 10);
+        }
+
+        function closeHelp() {
+            const modal = document.getElementById('helpModal');
+            const content = modal.querySelector('.modal-content');
+            content.classList.replace('scale-100', 'scale-95');
+            content.classList.replace('opacity-100', 'opacity-0');
+            setTimeout(() => modal.classList.replace('flex', 'hidden'), 300);
+        }
 
         function handleSearch() {
             currentSearch = document.getElementById('searchInput').value.toUpperCase();
@@ -107,54 +165,37 @@
         function render() {
             const container = document.getElementById('mainViewport');
             const printBody = document.getElementById('printTableBody');
-            
             const filtered = data.filter(g => g.id.includes(currentSearch) || g.materials.some(m => m.toUpperCase().includes(currentSearch)));
 
-            // 1. 화면용 카드 렌더링
             container.innerHTML = filtered.map(g => `
-                <div class="bg-white rounded-[2rem] shadow-xl overflow-hidden border border-slate-200 transition-all hover:shadow-2xl">
-                    <div class="p-8 border-b border-slate-100" style="background: linear-gradient(135deg, ${g.colorHex}15 0%, #ffffff 100%)">
-                        <div class="flex justify-between items-start mb-4">
+                <div class="bg-white rounded-[2.5rem] shadow-xl overflow-hidden border border-slate-200">
+                    <div class="p-8 border-b border-slate-50" style="background: linear-gradient(135deg, ${g.colorHex}15 0%, #ffffff 100%)">
+                        <div class="flex justify-between items-start mb-6">
                             <div class="w-16 h-16 rounded-2xl shadow-lg border-4 border-white" style="background-color: ${g.colorHex}"></div>
                             <div class="text-right">
-                                <h2 class="text-4xl font-black text-slate-900">${g.id}</h2>
+                                <h2 class="text-4xl font-black text-slate-900 tracking-tighter">${g.id}</h2>
                                 <p class="text-sm font-bold text-blue-600 uppercase tracking-widest">${g.group}</p>
                             </div>
                         </div>
                         <div class="flex items-center gap-2">
-                            <span class="px-3 py-1 rounded-full text-xs font-black border border-slate-200 bg-white">${g.colorName}</span>
+                            <span class="px-3 py-1 rounded-lg text-xs font-black border border-slate-200 bg-white">${g.colorName} 마킹</span>
                             <span class="text-xs font-bold text-slate-400">${g.note}</span>
                         </div>
                     </div>
                     <div class="p-8">
                         <div class="flex flex-wrap gap-2">
-                            ${g.materials.map(m => `
-                                <div class="px-3 py-2 rounded-xl text-sm font-bold material-badge ${currentSearch && m.toUpperCase().includes(currentSearch) ? 'highlight' : ''}">
-                                    ${m}
-                                </div>
-                            `).join('')}
+                            ${g.materials.map(m => `<div class="px-3 py-2 rounded-xl text-sm font-bold bg-slate-50 border border-slate-100 text-slate-600 ${currentSearch && m.toUpperCase().includes(currentSearch) ? 'highlight' : ''}">${m}</div>`).join('')}
                         </div>
                     </div>
                 </div>
             `).join('');
 
-            // 2. 인쇄용 테이블 렌더링
-            printBody.innerHTML = filtered.map(g => `
-                <tr>
-                    <td style="font-weight: bold; text-align: center;">${g.id}</td>
-                    <td>
-                        <div class="print-color-box" style="background-color: ${g.colorHex}"></div>
-                        ${g.colorName}
-                    </td>
-                    <td style="text-align: center;">${g.group}<br><small>${g.note}</small></td>
-                    <td style="font-size: 8pt; line-height: 1.2;">${g.materials.join(', ')}</td>
-                </tr>
-            `).join('');
+            printBody.innerHTML = filtered.map(g => `<tr><td style="font-weight:bold;text-align:center">${g.id}</td><td><div style="display:inline-block;width:12px;height:12px;border:1px solid #000;background:${g.colorHex};margin-right:5px"></div>${g.colorName}</td><td style="text-align:center">${g.group}<br><small>${g.note}</small></td><td style="font-size:8pt">${g.materials.join(', ')}</td></tr>`).join('');
         }
 
         function exportToExcel() {
-            const wb = XLSX.utils.table_to_book(document.getElementById('printableTable'), { sheet: "회수철기준" });
-            XLSX.writeFile(wb, "회수철_분류_기준.xlsx");
+            const wb = XLSX.utils.table_to_book(document.getElementById('printableTable'), { sheet: "Standard" });
+            XLSX.writeFile(wb, "Scrap_Iron_Guide.xlsx");
         }
 
         render();
